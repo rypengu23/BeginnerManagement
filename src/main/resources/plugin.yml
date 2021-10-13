@@ -1,0 +1,38 @@
+name: BeginnerManagement
+version: ${project.version}
+main: com.github.rypengu23.beginnermanagement.BeginnerManagement
+api-version: 1.17
+softdepend: ['DiscordSRV']
+
+commands:
+  beginnermanagement:
+    description: メインコマンド
+  bm:
+    description: 省略版
+
+permissions:
+  beginnerManagement.*:
+    description: 全ての権限にアクセス可能
+    children:
+      beginnerManagement.admin: true
+  beginnerManagement.admin:
+    description: 他人の情報・自分の規制情報にアクセス可能
+    default: op
+    children:
+      beginnerManagement.info: true
+      beginnerManagement.anotherInfo: true
+  beginnerManagement.info:
+    description: 自分の規制情報表示
+    default: op
+  beginnerManagement.anotherInfo:
+    description: 他人の規制情報表示
+    default: op
+  beginnerManagement.whitelist:
+    description: ホワイトリスト追加
+    default: op
+  beginnerManagement.reload:
+    description: Configのリロード
+    default: op
+  beginnerManagement.allow:
+    description: 制限時間内でも制限されない
+    default: op

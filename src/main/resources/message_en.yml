@@ -1,0 +1,19 @@
+# =======================================
+#  BeginnerManagement
+#  Message file
+# =======================================
+version: 1.0
+language: "English"
+# ↑↑ Do not edit ↑↑
+# =======================================
+
+# Prefix
+prefix: "[BM]"
+
+# [/bm info] runtime message
+# {time}:Date and time of release of restrictions. example)2021/01/01 0:00
+info: "Some actions are restricted until {time}."
+
+# Message to be displayed when a dangerous act is performed.
+# {time}:Date and time of release of restrictions. example)2021/01/01 0:00
+warn: "Some actions are restricted up to {time}."

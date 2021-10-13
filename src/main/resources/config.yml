@@ -1,0 +1,82 @@
+# =======================================
+#  BeginnerManagement
+# =======================================
+#
+# Troll prevention plugin by new players.
+# 新規プレイヤーによる荒らし行為防止プラグイン
+#
+# @author     rypengu23
+# @copyright  Copyright ryoengu23 2021
+version: 1.0
+language: "en"
+# =======================================
+
+setting:
+  # Whether to notify the Discord SRV console channel if any player is doing something dangerous.
+  # 危険行為を行っているプレイヤーが居た場合、DiscordSRVのコンソールチャンネルに通知するかどうか
+  useDiscordSRV: false
+
+time:
+  # Time from initial login to release of dangerous acts.
+  # 初回ログインから危険行為開放までの時間
+  day: 0
+  hour: 3
+  minute: 0
+
+limit:
+  # Restrictions on opening dangerous acts.
+  # 危険行為開放までの制限事項
+
+  # Destruction of blocks.
+  # true:Restrict false:Unrestricted
+  # ブロックの破壊
+  # true:制限 false:使用可
+  blockBreak: true
+
+  # Items that cannot be obtained from chests, etc.
+  # If you specify more than one, separate them with commas. (,)
+  # チェスト等から取得不可能なアイテム
+  # 複数指定する場合、カンマ区切りで記載 (,)
+  items: "TNT,TNT_MINECART,LAVA_BUCKET"
+
+  # Items that cannot be crafted.
+  # If you specify more than one, separate them with commas. (,)
+  # クラフト不可にするアイテム
+  # 複数指定する場合、カンマ区切りで記載 (,)
+  craft: "TNT,TNT_MINECART"
+
+  # Blocks that cannot be installed or destroyed.
+  # If you specify more than one, separate them with commas. (,)
+  # 設置・破壊不可にするブロック
+  # 複数指定する場合、カンマ区切りで記載 (,)
+  build: "TNT"
+
+  # Disable attackable entity. example) HORSE,CAT etc...
+  # If you specify more than one, separate them with commas. (,)
+  # 攻撃不可にするエンティティ
+  # 複数指定する場合、カンマ区切りで記載 (,)
+  damageEntity: "HORSE,CAT"
+
+  # Disable entity. example) MINECART,TNT_MINECART etc...
+  # If you specify more than one, separate them with commas. (,)
+  # 設置不可にするエンティティ
+  # 複数指定する場合、カンマ区切りで記載 (,)
+  createEntity: "TNT_MINECART"
+
+  # Use of lava bucket.
+  # true:Restrict false:Unrestricted
+  # マグマバケツの使用
+  # true:制限 false:使用可
+  useLavaBucket: false
+
+  # Use of water bucket.
+  # true:Restrict false:Unrestricted
+  # 水バケツの使用
+  # true:制限 false:使用可
+  useWaterBucket: false
+
+  # Use of flint and fire charge.
+  # true:Restrict false:Unrestricted
+  # 火打石・ファイヤーチャージの使用
+  # true:制限 false:使用可
+  useFlint: false
