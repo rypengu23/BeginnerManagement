@@ -36,75 +36,69 @@ Configで設定したエンティティへの攻撃を制限します。
 Configで設定したエンティティへの攻撃を制限します。
 >Limits attacks on entities set in Config.
 
-* 特定のエンティティ(MOB等)への攻撃 | Attack on a specific entity.
+* マグマ・水バケツの使用 |Use of lava or water bucket
 
-Configで設定したエンティティへの攻撃を制限します。
->Limits attacks on entities set in Config.
+マグマバケツまたは水バケツの使用を制限します。
+>Restrict the use of lava buckets or water buckets.
 
-* 特定のエンティティ(MOB等)への攻撃 | Attack on a specific entity.
+* 火打石・ファイヤーチャージの使用 | Attack on a specific entity.
 
-Configで設定したエンティティへの攻撃を制限します。
->Limits attacks on entities set in Config.
+火打石またはファイヤーチャージでの着火を制限します。
+>Limits ignition with flint or fire charge.
 
 
 # 任意プラグイン | Optional plugin
 
 * DiscordSRV
-自動リセット/バックアップ/再起動時にメッセージ送信を行えます。
->You can send messages during automatic reset, backup, and restart.
+危険行為を行ったプレイヤーが居た場合、コンソールチャンネルにメッセージを送信します。
+>If there is a player who has done a dangerous act, a message will be sent to the console channel.
 
 # コマンド | Commands
 
-* /awt reset [world type(normal/nether/end)]
+* /bm info
 
-種別ごとにConfigに記載されたワールドを再生成します。種別がallの場合、全種別(ノーマル・ネザー・ジエンド)を再生成します。Regenerate the world described in Config for each type. If the >type is all, all types (normal, nether, and the end) will be regenerated.
-* /awt backup [world name]
+自分の制限解除時刻を表示します。(表示内容はConfigから変更可能)
+>Displays your own restriction release time. (Display contents can be changed from Config)
+* /bm info [playername]
 
-指定したワールドをバックアップします。
->Backs up the specified world.
-* /awt reset info
+指定したプレイヤーの初回ログイン時刻・制限解除時刻を表示します。
+>Displays the first login time and restriction release time of the specified player.
+* /bm whitelist [playername]
 
-自動リセット時刻の情報を表示します。
->Displays information on the automatic reset time.
-* /awt restart info
-
-自動再起動時刻の情報を表示します。
->Displays information on the automatic restart time.
-* /awt backup info
-
-自動バックアップ時刻の情報を表示します。
->Displays information on the automatic backup time.
-* /awt reload
+指定したプレイヤーをホワイトリストに追加します。ホワイトリストのユーザーは制限解除時刻に関係無く制限が解除されます。
+>Adds the specified player to the white list. Whitelist users will be lifted regardless of the time the limit is lifted.
+* /bm reload
 
 Configをリロードします。
 >Reload Config.
-* /awt help
+* /bm help
 
 コマンドガイドを表示します。
 >Display the command guide.
 
 # Permission
 
-* autoWorldTools.admin
+* beginnerManagement.admin
 
-手動リセット・バックアップ・Configのリロードを行えます。
->You can perform manual reset, backup, and reload of Config.
-* autoWorldTools.reset
+自分あるいは他人の制限状況表示が行えます。
+>You can display the restriction status of yourself or others.
+* beginnerManagement.info
 
-手動リセットを行えます。
->You can perform a manual reset.
-* autoWorldTools.backup
+/bm info コマンドが利用出来ます。
+>The / bm info command is available.
+* beginnerManagement.anotherInfo
 
-手動バックアップを行えます。
->You can perform a manual backup.
-* autoWorldTools.resetInfo
+/bm info [playername]コマンドが利用出来ます。
+>The / bm info [playername] command is available.
+* beginnerManagement.whitelist
 
-リセット時刻情報を表示出来ます。
->The reset time information can be displayed.
-* autoWorldTools.backupInfo
+ホワイトリストへの追加が行えます。
+>You can add to the white list.
+* beginnerManagement.reload
 
-バックアップ時刻情報を表示出来ます。
->You can display the backup time information.
+/bm reload コマンドが利用出来ます。
+>The / bm reload command is available.
+* beginnerManagement.allow
 
-サーバー再起動時刻情報を表示出来ます。
->You can display the server restart time information.
+制限時間に関わらず制限をスルーします。特定のワールドでのみ制限を行いたくない場合などにご利用下さい。
+>Through the limit regardless of the time limit. Please use it when you do not want to limit only in a specific world.
