@@ -3,17 +3,17 @@ package com.github.rypengu23.beginnermanagement.listener;
 import com.github.rypengu23.beginnermanagement.util.PlayerDataUtil;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 
-public class Listener_PlayerJoinEvent implements Listener {
+public class Listener_PlayerLogout implements Listener {
 
     @EventHandler
     /**
-     * 新規プレイヤーログイン時、データ取得
+     * プレイヤーログアウト時、メモリアンロード
      */
-    public void PlayerLogin(PlayerJoinEvent event){
+    public void PlayerLogout(PlayerQuitEvent event){
 
         PlayerDataUtil playerDataUtil = new PlayerDataUtil();
-        playerDataUtil.loadPlayerData(event.getPlayer());
+        playerDataUtil.unloadPlayerData(event.getPlayer());
     }
 }

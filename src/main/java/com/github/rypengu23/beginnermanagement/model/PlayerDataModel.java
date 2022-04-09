@@ -1,14 +1,14 @@
 package com.github.rypengu23.beginnermanagement.model;
 
-import org.bukkit.entity.Player;
-
-import java.util.Calendar;
+import java.util.Date;
 
 public class PlayerDataModel {
 
     private String UUID;
-    private Calendar firstLoginDate;
-    private boolean Wildcard;
+    private String playerName;
+    private Date firstLoginDate;
+    private int punishmentNumberOfTimes;
+    private boolean whitelist;
 
     public PlayerDataModel() {
 
@@ -22,19 +22,35 @@ public class PlayerDataModel {
         this.UUID = UUID;
     }
 
-    public Calendar getFirstLoginDate() {
+    public String getPlayerName() {
+        return playerName;
+    }
+
+    public void setPlayerName(String playerName) {
+        this.playerName = playerName;
+    }
+
+    public Date getFirstLoginDate() {
         return firstLoginDate;
     }
 
-    public void setFirstLoginDate(Calendar firstLoginDate) {
+    public void setFirstLoginDate(Date firstLoginDate) {
         this.firstLoginDate = firstLoginDate;
     }
 
-    public boolean isWildcard() {
-        return Wildcard;
+    public int getPunishmentNumberOfTimes() {
+        return punishmentNumberOfTimes;
     }
 
-    public void setWildcard(boolean wildcard) {
-        Wildcard = wildcard;
+    public void setPunishmentNumberOfTimes(int punishmentNumberOfTimes) {
+        this.punishmentNumberOfTimes = punishmentNumberOfTimes;
+    }
+
+    public boolean isWhitelist() {
+        return whitelist;
+    }
+
+    public void setWhitelist(boolean whitelist) {
+        this.whitelist = whitelist;
     }
 }

@@ -10,6 +10,7 @@ public class MessageConfig {
     private String prefix;
 
     private String info;
+    private String infoNotLimit;
     private String warn;
 
     public MessageConfig(FileConfiguration config) {
@@ -20,6 +21,7 @@ public class MessageConfig {
         prefix = config.getString("prefix");
 
         info = config.getString("info");
+        info = config.getString("infoNotLimit");
         warn = config.getString("warn");
     }
 
@@ -37,6 +39,10 @@ public class MessageConfig {
 
     public String getInfo() {
         return info;
+    }
+
+    public String getInfoNotLimit() {
+        return infoNotLimit;
     }
 
     public String getWarn() {

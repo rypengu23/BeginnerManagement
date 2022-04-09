@@ -2,20 +2,26 @@ package com.github.rypengu23.beginnermanagement;
 
 import com.github.rypengu23.beginnermanagement.command.*;
 import com.github.rypengu23.beginnermanagement.config.*;
+import com.github.rypengu23.beginnermanagement.dao.ConnectDao;
 import com.github.rypengu23.beginnermanagement.listener.*;
-import com.github.rypengu23.beginnermanagement.util.PlayerDataUtil;
-import com.github.rypengu23.beginnermanagement.util.WhitelistUtil;
+import com.github.rypengu23.beginnermanagement.model.PlayerDataModel;
+import com.github.rypengu23.beginnermanagement.util.AutoBanUtil;
+import com.github.rypengu23.beginnermanagement.util.DiscordUtil;
 import github.scarsz.discordsrv.DiscordSRV;
+import github.scarsz.discordsrv.dependencies.jda.api.entities.TextChannel;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitTask;
+
+import java.util.HashMap;
 
 public final class BeginnerManagement extends JavaPlugin {
 
     //バージョン
-    public static double pluginVersion = 1.0;
+    public static double pluginVersion = 2.0;
 
     //インスタンス
     private static BeginnerManagement instance = null;
@@ -27,6 +33,14 @@ public final class BeginnerManagement extends JavaPlugin {
 
     //DiscordSRV
     public static DiscordSRV discordSRV;
+    public static TextChannel textChannel;
+
+    //メモリ
+    public static HashMap<String, PlayerDataModel> playerDataList = new HashMap<>();
+    public static HashMap<String, Integer> playerNumberOfViolations = new HashMap<>();
+
+    //タスク
+    public static BukkitTask resetCount;
 
     @Override
     public void onEnable() {
@@ -53,22 +67,14 @@ public final class BeginnerManagement extends JavaPlugin {
             messageConfig = configLoader.getMessageConfig();
         }
 
-        //プレイヤーデータの読み込み
-        PlayerDataUtil playerDataUtil = new PlayerDataUtil();
-        playerDataUtil.updatePlayerData();
-
-        WhitelistUtil whitelistUtil = new WhitelistUtil();
-        whitelistUtil.updateWhitelistData();
+        //DB接続
+        ConnectDao connectDao = new ConnectDao();
+        connectDao.connectionCheck();
 
         if (mainConfig.isUseDiscordSRV()) {
             //DiscordSRV接続
-            try {
-                Bukkit.getLogger().info("[BeginnerManagement] " + ConsoleMessage.BeginnerManagement_loadDiscordSRV);
-                discordSRV = (DiscordSRV) Bukkit.getServer().getPluginManager().getPlugin("DiscordSRV");
-                Bukkit.getLogger().info("[BeginnerManagement] " + ConsoleMessage.BeginnerManagement_loadCompDiscordSRV);
-            } catch (NoClassDefFoundError e) {
-                Bukkit.getLogger().warning("[BeginnerManagement] " + ConsoleMessage.BeginnerManagement_loadFailureDiscordSRV);
-            }
+            DiscordUtil discordUtil = new DiscordUtil();
+            discordUtil.connectDiscord();
         }
 
         //リスナー
@@ -89,6 +95,10 @@ public final class BeginnerManagement extends JavaPlugin {
         TabComplete tabComplete2 = new TabComplete();
         getCommand("bm").setTabCompleter(tabComplete2);
 
+        //違反回数リセット
+        AutoBanUtil autoBanUtil = new AutoBanUtil();
+        autoBanUtil.resetCount();
+
     }
 
     @Override
@@ -107,41 +117,27 @@ public final class BeginnerManagement extends JavaPlugin {
             configLoader = new ConfigLoader();
             //引数があるかどうか
             if (args.length != 0) {
+                Command_Info command_info = new Command_Info();
+                Command_Config command_config = new Command_Config();
+                Command_Help command_help = new Command_Help();
+                Command_Whitelist command_whitelist = new Command_Whitelist();
 
-                if (args.length == 1) {
-
-                    if (args[0].equalsIgnoreCase("info")) {
-                        Command_Info command_info = new Command_Info();
-                        command_info.showStatus(sender);
-
-                    } else if (args[0].equalsIgnoreCase("reload")) {
-                        Command_Config command_config = new Command_Config();
-                        command_config.reloadConfig(sender);
-
-                    } else if (args[0].equalsIgnoreCase("help")) {
-                        //helpコマンド ページ1
-                        Command_Help command_help = new Command_Help();
-                        command_help.showHelp(sender, "0");
-                    } else {
-                        //コマンドの形式が不正な場合
-                        sender.sendMessage("§c" + messageConfig.getPrefix() + " §f" + CommandMessage.BeginnerManagement_CommandFailure);
-                    }
-
-                } else if (args.length == 2) {
-
-                    if (args[0].equalsIgnoreCase("info")) {
-                        Command_Info command_info = new Command_Info();
-                        command_info.showStatus(sender, args[1]);
-                    }else if (args[0].equalsIgnoreCase("whitelist")) {
-                        Command_Whitelist command_whitelist = new Command_Whitelist();
-                        command_whitelist.addWhitelist(sender, args[1]);
-                    }
+                if(command_info.checkCommandExit(args[0])){
+                    command_info.sort(sender, args);
+                }else if(command_config.checkCommandExit(args[0])){
+                    command_config.sort(sender, args);
+                }else if(command_help.checkCommandExit(args[0])){
+                    command_help.sort(sender, args);
+                }else if(command_whitelist.checkCommandExit(args[0])){
+                    command_whitelist.sort(sender, args);
+                } else {
+                    //コマンドの形式が不正な場合
+                    sender.sendMessage("§c" + messageConfig.getPrefix() + " §f" + CommandMessage.CommandFailure);
                 }
-
 
             } else {
                 //引数が無ければバージョン情報
-                sender.sendMessage("§a" + messageConfig.getPrefix() + " §fBeginnerManagement Ver1.0");
+                sender.sendMessage("§a" + messageConfig.getPrefix() + " §fBeginnerManagement Ver"+ pluginVersion);
                 sender.sendMessage("§a" + messageConfig.getPrefix() + " §fDeveloper: rypengu23");
             }
 

@@ -4,7 +4,9 @@ import com.github.rypengu23.beginnermanagement.config.CommandMessage;
 import com.github.rypengu23.beginnermanagement.config.ConfigLoader;
 import com.github.rypengu23.beginnermanagement.config.MainConfig;
 import com.github.rypengu23.beginnermanagement.config.MessageConfig;
+import com.github.rypengu23.beginnermanagement.util.CheckUtil;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,14 +22,58 @@ public class Command_Help {
         this.messageConfig = configLoader.getMessageConfig();
     }
 
-    public void showHelp(CommandSender sender, String page){
+    /**
+     * helpコマンドの処理振り分け
+     * @param sender
+     * @param args
+     */
+    public void sort(CommandSender sender, String args[]){
+
+        if(args[0].equalsIgnoreCase("help")){
+
+            if(args.length == 1) {
+                //help
+                showHelp(sender, "0");
+            }else if(args.length == 2){
+                //help(ページ指定あり)
+                showHelp(sender, args[1]);
+            }else{
+                //不正
+                sender.sendMessage("§c["+ messageConfig.getPrefix() +"] §f" + CommandMessage.CommandFailure);
+                return;
+            }
+        }else{
+            //不正
+            sender.sendMessage("§c["+ messageConfig.getPrefix() +"] §f" + CommandMessage.CommandFailure);
+            return;
+        }
+    }
+
+    /**
+     * helpコマンドか判定
+     * @param command
+     * @return
+     */
+    public boolean checkCommandExit(String command){
+        CheckUtil checkUtil = new CheckUtil();
+        if(checkUtil.checkNullOrBlank(command)){
+            return false;
+        }
+
+        ArrayList<String> commandList = new ArrayList<>();
+        commandList.add("help");
+
+        return commandList.contains(command.toLowerCase());
+    }
+
+    private void showHelp(CommandSender sender, String page){
 
         int pageNumber = 0;
         //引数が数字かチェック
         try {
             pageNumber = Integer.parseInt(page);
         } catch(NumberFormatException e){
-            sender.sendMessage("§c" + messageConfig.getPrefix() +"§f "+ CommandMessage.BeginnerManagement_CommandFailure);
+            sender.sendMessage("§c" + messageConfig.getPrefix() +"§f "+ CommandMessage.CommandFailure);
             return;
         }
 

@@ -1,13 +1,15 @@
 package com.github.rypengu23.beginnermanagement.listener;
 
+import com.github.rypengu23.beginnermanagement.BeginnerManagement;
 import com.github.rypengu23.beginnermanagement.config.ConfigLoader;
+import com.github.rypengu23.beginnermanagement.config.DiscordMessage;
 import com.github.rypengu23.beginnermanagement.config.MainConfig;
 import com.github.rypengu23.beginnermanagement.config.MessageConfig;
+import com.github.rypengu23.beginnermanagement.model.PlayerDataModel;
+import com.github.rypengu23.beginnermanagement.util.AutoBanUtil;
 import com.github.rypengu23.beginnermanagement.util.ConvertUtil;
 import com.github.rypengu23.beginnermanagement.util.DiscordUtil;
 import com.github.rypengu23.beginnermanagement.util.PlayerDataUtil;
-import com.github.rypengu23.beginnermanagement.util.WhitelistUtil;
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -38,55 +40,76 @@ public class Listener_Entity implements Listener {
     /**
      * 設置したエンティティがConfigに登録されている場合、無効化する。
      */
-    public void CheckCreateEntity(PlayerInteractEvent event) {
-
-        PlayerDataUtil playerDataUtil = new PlayerDataUtil();
-        ConvertUtil convertUtil = new ConvertUtil();
-        DiscordUtil discordUtil = new DiscordUtil();
-        updateConfig();
-
-        Player player = event.getPlayer();
-
-        //権限を持っている場合
-        if(player.hasPermission("beginnerManagement.allow")){
-            return;
-        }
+    public void checkCreateEntity(PlayerInteractEvent event) {
 
         //右クリックか判定
         if (event.getAction() != Action.RIGHT_CLICK_BLOCK) {
             return;
         }
 
-        //Configに記載されていない場合
+        Player player = event.getPlayer();
+
+        //権限を持っている場合
+        if(player.hasPermission("beginnerManagement.allow")){
+            //スキップ
+            return;
+        }
+
+        updateConfig();
+        PlayerDataUtil playerDataUtil = new PlayerDataUtil();
+
+        //プレイヤー情報取得
+        if(!BeginnerManagement.playerDataList.containsKey(player.getUniqueId().toString())){
+            playerDataUtil.loadPlayerData(player);
+        }
+        PlayerDataModel playerData = BeginnerManagement.playerDataList.get(player.getUniqueId().toString());
+
+        //ホワイトリストに記載されている場合
+        if (playerData.isWhitelist()){
+            //スキップ
+            return;
+        }
+
+        ConvertUtil convertUtil = new ConvertUtil();
+        DiscordUtil discordUtil = new DiscordUtil();
+
+        //Configに記載されているエンティティかチェック
         if (!mainConfig.getCreateEntity().contains(player.getInventory().getItemInMainHand().getType().name())) {
             return;
         }
 
-        //登録されていないユーザーの場合
-        if (playerDataUtil.getPlayerData(player) == null) {
-            return;
-        }
-
-        //ホワイトリストに記載されている場合
-        WhitelistUtil whitelistUtil = new WhitelistUtil();
-        if (whitelistUtil.checkWhitelist(player)) {
-            return;
-        }
-
         //所定の時間が経過している場合
-        if (playerDataUtil.checkOpen(player)) {
+        if (playerDataUtil.checkRestrictionLiftDate(playerData)) {
+            //スキップ
             return;
         }
 
         SimpleDateFormat format = new SimpleDateFormat("yyyy/MM/dd HH:mm");
-        String time = format.format(playerDataUtil.getOpenDate(player).getTime());
+        String time = format.format(playerDataUtil.getRestrictionLiftDate(playerData).getTime());
 
         event.setCancelled(true);
-        player.sendMessage("§c" + messageConfig.getPrefix() + " §f" + convertUtil.placeholderUtil("{time}", time, messageConfig.getWarn()));
+        player.sendMessage("§c"+ messageConfig.getPrefix() +" §f"+ convertUtil.placeholderUtil("{time}", time, messageConfig.getWarn()));
 
-        if (mainConfig.isUseDiscordSRV()) {
-            discordUtil.sendMessageConsoleChannel("[BeginnerManagement]" + player.getDisplayName() + ":" + "Dangerous acts(Entity)");
+        //Discordにメッセージ送信
+        if(mainConfig.isUseDiscordSRV()){
+            StringBuilder message = new StringBuilder();
+            if(mainConfig.isUseDiscordNotify()){
+                message.append("<@");
+                message.append(mainConfig.getNotifyMentionId());
+                message.append(">");
+            }
+            message.append(messageConfig.getPrefix());
+            message.append(" ");
+            message.append(DiscordMessage.NotifyActOfLimitCommon);
+            message.append(DiscordMessage.NotifyActOfLimit_CreateEntity);
+
+            discordUtil.sendMessage(convertUtil.placeholderUtil("{player}", player.getDisplayName(), message.toString()));
         }
+
+        //自動BAN判定
+        AutoBanUtil autoBanUtil = new AutoBanUtil();
+        autoBanUtil.plusNumberOfViolations(playerData.getUUID());
+        autoBanUtil.checkPunishmentTime(player);
     }
 
     @EventHandler
@@ -94,11 +117,6 @@ public class Listener_Entity implements Listener {
      * エンティティがプレイヤーによって攻撃された場合、無効化する。
      */
     public void CheckDamageEntity(EntityDamageByEntityEvent event) {
-
-        PlayerDataUtil playerDataUtil = new PlayerDataUtil();
-        ConvertUtil convertUtil = new ConvertUtil();
-        DiscordUtil discordUtil = new DiscordUtil();
-        updateConfig();
 
         //プレイヤーか判定
         if (event.getDamager().getType() != EntityType.PLAYER) {
@@ -108,45 +126,71 @@ public class Listener_Entity implements Listener {
         Player player = (Player) event.getDamager();
 
         //権限を持っている場合
-        if(player.hasPermission("beginnerManagement.allow")){
+        if (player.hasPermission("beginnerManagement.allow")) {
+            //スキップ
             return;
         }
+
+        updateConfig();
+        PlayerDataUtil playerDataUtil = new PlayerDataUtil();
+
+        //プレイヤー情報取得
+        if (!BeginnerManagement.playerDataList.containsKey(player.getUniqueId().toString())) {
+            playerDataUtil.loadPlayerData(player);
+        }
+        PlayerDataModel playerData = BeginnerManagement.playerDataList.get(player.getUniqueId().toString());
+
+        //ホワイトリストに記載されている場合
+        if (playerData.isWhitelist()) {
+            //スキップ
+            return;
+        }
+
+        ConvertUtil convertUtil = new ConvertUtil();
+        DiscordUtil discordUtil = new DiscordUtil();
 
         //Configに記載されていない場合
         boolean flag = true;
-        for(String entityName:mainConfig.getDamageEntity()){
-            if(event.getEntityType().name().equalsIgnoreCase(entityName)){
+        for (String entityName : mainConfig.getDamageEntity()) {
+            if (event.getEntityType().name().equalsIgnoreCase(entityName)) {
                 flag = false;
             }
         }
-        if (flag){
-            return;
-        }
-
-        //登録されていないユーザーの場合
-        if (playerDataUtil.getPlayerData(player) == null) {
-            return;
-        }
-
-        //ホワイトリストに記載されている場合
-        WhitelistUtil whitelistUtil = new WhitelistUtil();
-        if (whitelistUtil.checkWhitelist(player)) {
+        if (flag) {
             return;
         }
 
         //所定の時間が経過している場合
-        if (playerDataUtil.checkOpen(player)) {
+        if (playerDataUtil.checkRestrictionLiftDate(playerData)) {
+            //スキップ
             return;
         }
 
         SimpleDateFormat format = new SimpleDateFormat("yyyy/MM/dd HH:mm");
-        String time = format.format(playerDataUtil.getOpenDate(player).getTime());
+        String time = format.format(playerDataUtil.getRestrictionLiftDate(playerData).getTime());
 
         event.setCancelled(true);
         player.sendMessage("§c" + messageConfig.getPrefix() + " §f" + convertUtil.placeholderUtil("{time}", time, messageConfig.getWarn()));
 
-        if (mainConfig.isUseDiscordSRV()) {
-            discordUtil.sendMessageConsoleChannel("[BeginnerManagement]" + player.getDisplayName() + ":" + "Dangerous acts(Entity)");
+        //Discordにメッセージ送信
+        if(mainConfig.isUseDiscordSRV()){
+            StringBuilder message = new StringBuilder();
+            if(mainConfig.isUseDiscordNotify()){
+                message.append("<@");
+                message.append(mainConfig.getNotifyMentionId());
+                message.append(">");
+            }
+            message.append(messageConfig.getPrefix());
+            message.append(" ");
+            message.append(DiscordMessage.NotifyActOfLimitCommon);
+            message.append(DiscordMessage.NotifyActOfLimit_DamageEntity);
+
+            discordUtil.sendMessage(convertUtil.placeholderUtil("{player}", player.getDisplayName(), message.toString()));
         }
+
+        //自動BAN判定
+        AutoBanUtil autoBanUtil = new AutoBanUtil();
+        autoBanUtil.plusNumberOfViolations(playerData.getUUID());
+        autoBanUtil.checkPunishmentTime(player);
     }
 }

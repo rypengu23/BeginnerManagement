@@ -4,6 +4,7 @@ import org.bukkit.command.CommandSender;
 
 import java.io.File;
 import java.util.Calendar;
+import java.util.regex.Pattern;
 
 public class CheckUtil {
 
@@ -50,5 +51,21 @@ public class CheckUtil {
         }
 
         return false;
+    }
+
+    /**
+     * 与えられた引数が数値か判定
+     * @param str
+     * @return
+     */
+    public boolean checkNumeric(String str){
+
+        if(str == null){
+            return false;
+        }
+
+        Pattern pattern = Pattern.compile("^[0-9]+$|-[0-9]+$");
+
+        return pattern.matcher(str).matches();
     }
 }

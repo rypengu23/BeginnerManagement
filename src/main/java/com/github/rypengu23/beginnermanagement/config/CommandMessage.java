@@ -2,9 +2,9 @@ package com.github.rypengu23.beginnermanagement.config;
 
 public class CommandMessage {
 
-    public static String BeginnerManagement_ConfigReload;
-    public static String BeginnerManagement_CommandFailure;
-    public static String BeginnerManagement_DoNotHavePermission;
+    public static String ConfigReload;
+    public static String CommandFailure;
+    public static String DoNotHavePermission;
 
     public static String Command_Info_SHOWSTATUS1;
     public static String Command_Info_SHOWSTATUS2;
@@ -15,6 +15,8 @@ public class CommandMessage {
     public static String Command_Whitelist_PlayerNotFound;
     public static String Command_Whitelist_Added;
     public static String Command_Whitelist_Add;
+    public static String Command_Whitelist_Removed;
+    public static String Command_Whitelist_Remove;
 
     public static String Command_Help_Line1;
     public static String Command_Help_Info;
@@ -31,9 +33,9 @@ public class CommandMessage {
 
     public void changeLanguageCommandMessages(){
         if(mainConfig.getLanguage().equals("ja")){
-            BeginnerManagement_ConfigReload = "Configをリロードしました。";
-            BeginnerManagement_CommandFailure = "不正なコマンドです。";
-            BeginnerManagement_DoNotHavePermission = "権限を所有していません。";
+            ConfigReload = "Configをリロードしました。";
+            CommandFailure = "不正なコマンドです。";
+            DoNotHavePermission = "権限を所有していません。";
 
             Command_Info_SHOWSTATUS1 = "§b――――― §f{player}のログイン情報 §b―――――";
             Command_Info_SHOWSTATUS2 = "初回ログイン: {firstlogin}";
@@ -44,6 +46,8 @@ public class CommandMessage {
             Command_Whitelist_PlayerNotFound = "指定したプレイヤーは見つかりませんでした。";
             Command_Whitelist_Added = "指定したプレイヤーは既に追加されています。";
             Command_Whitelist_Add = "ホワイトリストに{player}を追加しました。";
+            Command_Whitelist_Removed = "指定したプレイヤーはホワイトリストに追加されていません。";
+            Command_Whitelist_Remove = "ホワイトリストから{player}を削除しました。";
 
             Command_Help_Line1 = "§b――――― §fBeginnerManagement コマンドガイド §b―――――";
             Command_Help_Info = "§e/bm info §f: 規制情報を表示。";
@@ -53,9 +57,9 @@ public class CommandMessage {
             Command_Help_LineLast = "§b――――――――――――――――――――――――――――――――――――――――";
 
         } else if(mainConfig.getLanguage().equals("en")){
-            BeginnerManagement_ConfigReload = "Config reloaded.";
-            BeginnerManagement_CommandFailure = "Command failure.";
-            BeginnerManagement_DoNotHavePermission = "You do not have permission.";
+            ConfigReload = "Config reloaded.";
+            CommandFailure = "Command failure.";
+            DoNotHavePermission = "You do not have permission.";
 
             Command_Info_SHOWSTATUS1 = "§b――――― §f{player}'s information §b―――――";
             Command_Info_SHOWSTATUS2 = "First login: {firstlogin}";
@@ -66,6 +70,8 @@ public class CommandMessage {
             Command_Whitelist_PlayerNotFound = "Player not found.";
             Command_Whitelist_Added = "Player have already been added.";
             Command_Whitelist_Add = "Added {player} to the white list.";
+            Command_Whitelist_Removed = "Player have already been removed.";
+            Command_Whitelist_Remove = "Removed {player} to the white list.";
 
             Command_Help_Line1 = "§b――――― §fBeginnerManagement Help §b―――――";
             Command_Help_Info = "§e/bm info §f: Show regulatory information.";

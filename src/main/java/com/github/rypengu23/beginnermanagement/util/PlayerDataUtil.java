@@ -2,23 +2,21 @@ package com.github.rypengu23.beginnermanagement.util;
 
 import com.github.rypengu23.beginnermanagement.BeginnerManagement;
 import com.github.rypengu23.beginnermanagement.config.ConfigLoader;
+import com.github.rypengu23.beginnermanagement.config.ConsoleMessage;
 import com.github.rypengu23.beginnermanagement.config.MainConfig;
 import com.github.rypengu23.beginnermanagement.config.MessageConfig;
+import com.github.rypengu23.beginnermanagement.dao.InfoDao;
 import com.github.rypengu23.beginnermanagement.model.PlayerDataModel;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
-import java.io.*;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
+import java.util.UUID;
 
 public class PlayerDataUtil {
     private final ConfigLoader configLoader;
     private final MainConfig mainConfig;
     private final MessageConfig messageConfig;
-
-    public static ArrayList<PlayerDataModel> playerData;
 
     public PlayerDataUtil(){
         configLoader = new ConfigLoader();
@@ -27,151 +25,167 @@ public class PlayerDataUtil {
     }
 
     /**
-     * プレイヤーデータを更新
+     * プレイヤーデータを作成・読み込み
+     * @param player
      */
-    public void updatePlayerData(){
+    public void loadPlayerData(Player player) {
 
-        File playerDataFile = new File(BeginnerManagement.getInstance().getDataFolder().getPath() + "/playerdata.txt");
+        InfoDao infoDao = new InfoDao();
+        String uuid = player.getUniqueId().toString();
+        String playerName = player.getName();
 
-        if(!playerDataFile.exists()){
-            try {
-                playerDataFile.createNewFile();
-            } catch (IOException e) {
+        PlayerDataModel playerDataModel = infoDao.getPlayerData(uuid);
+
+        if (playerDataModel == null) {
+            //新規の場合
+            infoDao.insertNewPlayerInfo(uuid,playerName);
+            playerDataModel = infoDao.getPlayerData(uuid);
+            Bukkit.getLogger().info("[BeginnerManagement] " + ConsoleMessage.PlayerDataUtil_CreateNewPlayerData);
+        }else{
+            //既存の場合
+            //名前変更確認
+            if(playerDataModel.getPlayerName() == null){
+                infoDao.updateNewPlayerName(uuid, playerName);
+                playerDataModel = infoDao.getPlayerData(uuid);
+            }else if(!playerDataModel.getPlayerName().equals(playerName)) {
+                PlayerDataModel duplicatePlayerData = infoDao.getPlayerDataFromPlayerName(playerName);
+                if(duplicatePlayerData!=null){
+                    //更新後IDがほかユーザーに設定されている場合
+                    String duplicatePlayerNewName = Bukkit.getOfflinePlayer(UUID.fromString(duplicatePlayerData.getUUID())).getName();
+                    infoDao.updateNewPlayerName(duplicatePlayerData.getUUID(), duplicatePlayerNewName);
+                }
+                infoDao.updateNewPlayerName(uuid, playerName);
+                playerDataModel = infoDao.getPlayerData(uuid);
             }
         }
 
-        playerData = getPlayerDateList();
+        //メモリにセット
+        BeginnerManagement.playerDataList.put(playerDataModel.getUUID(), playerDataModel);
+        BeginnerManagement.playerNumberOfViolations.put(playerDataModel.getUUID(), 0);
     }
 
     /**
-     * プレイヤーの初回ログイン情報等のリストを全取得
+     * プレイヤーデータをアンロード
+     * @param player
+     */
+    public void unloadPlayerData(Player player) {
+
+        //メモリから削除
+        String uuid = player.getUniqueId().toString();
+
+        BeginnerManagement.playerDataList.remove(uuid);
+        BeginnerManagement.playerNumberOfViolations.remove(uuid);
+    }
+
+    /**
+     * 引数のプレイヤーのブロック破壊制限時刻を取得
+     * @param playerDataModel
      * @return
      */
-    public ArrayList<PlayerDataModel> getPlayerDateList(){
+    public Calendar getRestrictionLiftDate(PlayerDataModel playerDataModel){
 
-        ConvertUtil convertUtil = new ConvertUtil();
+        //初回ログイン日を取得
+        Calendar firstLoginDate = Calendar.getInstance();
+        firstLoginDate.setTime(playerDataModel.getFirstLoginDate());
 
-        ArrayList<PlayerDataModel> resultList = new ArrayList<>();
+        //制限終了時刻を計算
+        Calendar limitDate = (Calendar) firstLoginDate.clone();
+        limitDate.add(Calendar.DAY_OF_MONTH, mainConfig.getDay());
+        limitDate.add(Calendar.HOUR_OF_DAY, mainConfig.getHour());
+        limitDate.add(Calendar.MINUTE, mainConfig.getMinute());
 
-        try {
-            File playerDataFile = new File(BeginnerManagement.getInstance().getDataFolder().getPath() + "/playerdata.txt");
-            FileReader filereader = new FileReader(playerDataFile);
-            BufferedReader br = new BufferedReader(filereader);
-
-            String str;
-            while((str = br.readLine()) != null){
-                PlayerDataModel playerDataModel = new PlayerDataModel();
-
-                playerDataModel.setUUID(str.split(",")[0]);
-                playerDataModel.setFirstLoginDate(convertUtil.convertCalendar(str.split(",")[1]));
-                if(Integer.parseInt(str.split(",")[2]) == 0){
-                    playerDataModel.setWildcard(false);
-                }else{
-                    playerDataModel.setWildcard(true);
-                }
-
-                resultList.add(playerDataModel);
-            }
-
-
-        } catch (IOException e) {
-
-        }
-
-        return resultList;
-
+        return limitDate;
     }
 
-    public void saveNewPlayerData(Player player){
+    /**
+     * 引数のプレイヤーが制限時刻を過ぎているか
+     * @param playerDataModel
+     * @return
+     */
+    public boolean checkRestrictionLiftDate(PlayerDataModel playerDataModel){
 
-        CheckUtil checkUtil = new CheckUtil();
-        ConvertUtil convertUtil = new ConvertUtil();
+        //初回ログイン日を取得
+        Calendar firstLoginDate = Calendar.getInstance();
+        firstLoginDate.setTime(playerDataModel.getFirstLoginDate());
 
-        Date nowDate = new Date();
+        //制限終了時刻を計算
+        Calendar limitDate = (Calendar) firstLoginDate.clone();
+        limitDate.add(Calendar.DAY_OF_MONTH, mainConfig.getDay());
+        limitDate.add(Calendar.HOUR_OF_DAY, mainConfig.getHour());
+        limitDate.add(Calendar.MINUTE, mainConfig.getMinute());
 
-        SimpleDateFormat format = new SimpleDateFormat("yyyy/MM/dd HH:mm");
-        String time = format.format(nowDate);
+        //現在時刻
+        Calendar now = Calendar.getInstance();
 
-        try {
-            File playerDataFile = new File(BeginnerManagement.getInstance().getDataFolder().getPath() + "/playerdata.txt");
+        //現在時刻が制限終了時刻を過ぎているか
+        int check = now.compareTo(limitDate);
 
-            if (checkUtil.checkBeforeWriteFile(playerDataFile)){
-                FileWriter filewriter = new FileWriter(playerDataFile, true);
-
-                if(player.isOp()) {
-                    filewriter.write(player.getUniqueId().toString() + "," + time + ",1\r\n");
-                }else{
-                    filewriter.write(player.getUniqueId().toString() + "," + time + ",0\r\n");
-                }
-
-                filewriter.close();
-            }else{
-
-            }
-
-
-        } catch (IOException e) {
-
-        }
-
-    }
-
-    public boolean checkOpen(Player player){
-
-        Calendar calendar = Calendar.getInstance();
-
-        //プレイヤーが危険行為制限時間を超えているかどうか
-        if(getOpenDate(player).compareTo(calendar) < 0){
-            //超えている場合
+        if(check > 0){
             return true;
         }
+
         return false;
-
     }
 
     /**
-     * 引数のプレイヤーの初回ログイン日時等の情報を取得
-     * @param player
+     * 破壊可能時刻を取得
+     * @param playerDataModel
      * @return
      */
-    public PlayerDataModel getPlayerData(Player player){
+    public Calendar getBreakPossibleDate(PlayerDataModel playerDataModel){
 
-        try {
-            for (PlayerDataModel playerDataModel : this.playerData) {
-                if (playerDataModel.getUUID().equalsIgnoreCase(player.getUniqueId().toString())) {
-                    return playerDataModel;
-                }
-            }
-        }catch(NullPointerException e){
-            saveNewPlayerData(player);
-            updatePlayerData();
-            getPlayerData(player);
-        }
+        //初回ログイン日を取得
+        Calendar firstLoginDate = Calendar.getInstance();
+        firstLoginDate.setTime(playerDataModel.getFirstLoginDate());
 
-        return null;
+        //ブロック破壊制限終了時刻を計算
+        Calendar breakLimitDate = (Calendar) firstLoginDate.clone();
+        breakLimitDate.add(Calendar.DAY_OF_MONTH, mainConfig.getBreakDay());
+        breakLimitDate.add(Calendar.HOUR_OF_DAY, mainConfig.getBreakHour());
+        breakLimitDate.add(Calendar.MINUTE, mainConfig.getBreakMinute());
+
+        return breakLimitDate;
     }
 
     /**
-     * 引数のプレイヤーの危険行為開放日時の情報を取得
-     * @param player
+     * 現在時刻が破壊可能時刻を過ぎているかどうか
+     * @param playerDataModel
      * @return
      */
-    public Calendar getOpenDate(Player player){
+    public boolean checkBreakPermission(PlayerDataModel playerDataModel){
 
-        for(PlayerDataModel playerDataModel:this.playerData){
-            if(playerDataModel.getUUID().equalsIgnoreCase(player.getUniqueId().toString())){
+        //初回ログイン日を取得
+        Calendar firstLoginDate = Calendar.getInstance();
+        firstLoginDate.setTime(playerDataModel.getFirstLoginDate());
 
-                Calendar firstLoginDate = (Calendar) playerDataModel.getFirstLoginDate().clone();
-                firstLoginDate.add(Calendar.DATE, mainConfig.getDay());
-                firstLoginDate.add(Calendar.HOUR_OF_DAY, mainConfig.getHour());
-                firstLoginDate.add(Calendar.MINUTE, mainConfig.getMinute());
+        //ブロック破壊制限終了時刻を計算
+        Calendar breakLimitDate = (Calendar) firstLoginDate.clone();
+        breakLimitDate.add(Calendar.DAY_OF_MONTH, mainConfig.getBreakDay());
+        breakLimitDate.add(Calendar.HOUR_OF_DAY, mainConfig.getBreakHour());
+        breakLimitDate.add(Calendar.MINUTE, mainConfig.getBreakMinute());
 
-                return firstLoginDate;
-            }
+        //現在時刻
+        Calendar now = Calendar.getInstance();
+
+        //現在時刻がブロック破壊制限終了時刻を過ぎているか
+        int check = now.compareTo(breakLimitDate);
+
+        if(check > 0){
+            return true;
         }
 
-        return null;
+        return false;
     }
 
+    /**
+     * プレイヤー名からUUIDを取得
+     * @param playerName
+     * @return
+     */
+    public PlayerDataModel getUUID(String playerName) {
+        InfoDao infoDao = new InfoDao();
 
+        PlayerDataModel playerData = infoDao.getPlayerDataFromPlayerName(playerName);
+        return playerData;
+    }
 }

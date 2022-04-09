@@ -11,10 +11,7 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class ConfigUpdater {
 
@@ -31,17 +28,17 @@ public class ConfigUpdater {
         this.messageConfig = configLoader.getMessageConfig();
     }
 
-    public boolean configUpdateCheck(){
+    public boolean configUpdateCheck() {
 
         boolean checkFlag = false;
 
         Bukkit.getLogger().info("[BeginnerManagement] " + ConsoleMessage.ConfigUpdater_CheckUpdateConfig);
-        if(mainConfig.getVersion().compareTo(BeginnerManagement.pluginVersion) == -1){
+        if (mainConfig.getVersion().compareTo(BeginnerManagement.pluginVersion) < 0) {
             Bukkit.getLogger().info("[BeginnerManagement] " + ConsoleMessage.ConfigUpdater_UpdateConfig);
             migrateNewConfig(1);
             checkFlag = true;
         }
-        if(messageConfig.getVersion().compareTo(BeginnerManagement.pluginVersion) == -1) {
+        if (messageConfig.getVersion().compareTo(BeginnerManagement.pluginVersion) < 0) {
             Bukkit.getLogger().info("[BeginnerManagement] " + ConsoleMessage.ConfigUpdater_NoConfigUpdates);
             migrateNewConfig(2);
             checkFlag = true;
@@ -54,6 +51,7 @@ public class ConfigUpdater {
      * Configを新しいバージョンに移行。
      * type=1 : MainConfig
      * type=2 : MessageConfig
+     *
      * @param type
      */
     public void migrateNewConfig(int type) {
@@ -61,52 +59,58 @@ public class ConfigUpdater {
         CheckUtil checkUtil = new CheckUtil();
         Configuration configuration;
 
-        YamlLoader mainLoader = new YamlLoader(plugin, "config.yml");
-        YamlLoader messageLoader = new YamlLoader(plugin, "message_"+ mainConfig.getLanguage() +".yml");
+        String configFileName = "config.yml";
+        String messageFileNameEn = "message_en.yml";
+        String messageFileNameJa = "message_ja.yml";
 
-        //現在のConfigを読み込み
-        ArrayList<String> configFileName = new ArrayList<>();
-        if(type == 1) {
-            configuration = mainLoader.getConfig();
-            configFileName.add("config.yml");
-        }else{
-            configuration = messageLoader.getConfig();
-            configFileName.add("message_en.yml");
-            configFileName.add("message_ja.yml");
+        YamlLoader mainLoader = new YamlLoader(plugin, configFileName);
+        YamlLoader messageLoaderEn = new YamlLoader(plugin, messageFileNameEn);
+        YamlLoader messageLoaderJa = new YamlLoader(plugin, messageFileNameJa);
+
+        HashMap<String, YamlLoader> updateConfigList = new HashMap<>();
+        if (type == 1) {
+            updateConfigList.put(configFileName, mainLoader);
+        } else {
+            updateConfigList.put(messageFileNameEn, messageLoaderEn);
+            updateConfigList.put(messageFileNameJa, messageLoaderJa);
         }
 
-        for(String fileName:configFileName) {
+        for (Map.Entry<String, YamlLoader> entry : updateConfigList.entrySet()) {
+            //現在のConfigを読み込み
+            configuration = entry.getValue().getConfig();
 
-            //ファイルを指定
-            File configFile = new File(plugin.getDataFolder(), fileName);
+            String fileName = entry.getKey();
 
             //古いConfigをバックアップ
-            File oldConfigFile = configFile;
-            try {
-                oldConfigFile.createNewFile();
-            } catch (IOException e) {
-
+            File oldConfigFile = new File(plugin.getDataFolder(), fileName);
+            if(!oldConfigFile.exists()){
+                //ファイルが存在しない場合
+                continue;
             }
+
             //ファイル名用に現在日時取得
             //ファイル名用日付取得
             Date nowDate = new Date();
             SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd_HHmm");
 
             Double version = 1.0;
-            if(type == 1){
+            if (type == 1) {
                 version = mainConfig.getVersion();
-            }else{
+            } else {
                 version = messageConfig.getVersion();
             }
 
-            //古いConfigを別名で保存
+            //古いConfigのファイル名変更
             oldConfigFile.renameTo(new File(plugin.getDataFolder(), fileName.split("\\.")[0] + "_Ver" + version + "-" + format.format(nowDate) + ".yml.old"));
 
             //古いConfigを削除
-            configFile.delete();
+            //configFile.delete();
 
             //新しいConfigの配置
             configLoader.reloadConfig();
+
+            //ファイルを取得
+            File configFile = new File(plugin.getDataFolder(), fileName);
 
             //Configを全行取得
             List<String> ymlLines = new ArrayList<>();
@@ -127,21 +131,23 @@ public class ConfigUpdater {
             }
 
             //書き出し
+
+            Map<String, String> typeList = mainConfig.getConfigTypeList();
             try {
-                OutputStreamWriter osw = new OutputStreamWriter(new FileOutputStream(configFile), "UTF-8");
+                OutputStreamWriter osw = new OutputStreamWriter(new FileOutputStream(configFile), StandardCharsets.UTF_8);
                 BufferedWriter bufferedWriter = new BufferedWriter(osw);
 
                 String sectionName = "";
 
                 for (String line : ymlLines) {
 
-                    //空白の場合、スキップ
+                    //空白の場合、空白出力してスキップ
                     if (line.trim().length() == 0) {
                         bufferedWriter.append("");
                         bufferedWriter.newLine();
                         continue;
                     }
-                    //コメント行の場合、スキップ
+                    //コメント行の場合、内容出力してスキップ
                     if ("#".equals(String.valueOf(line.trim().charAt(0)))) {
                         bufferedWriter.append(line);
                         bufferedWriter.newLine();
@@ -164,9 +170,14 @@ public class ConfigUpdater {
                         continue;
                     }
 
-                    //古いConfigに値が無い項目の場合
                     try {
-                        configuration.get(lineContent[0].trim());
+                        if(configuration.get(lineContent[0].trim())==null){
+                            //古いConfigに値が無い項目の場合
+                            //内容出力してスキップ
+                            bufferedWriter.append(line);
+                            bufferedWriter.newLine();
+                            continue;
+                        }
                     } catch (NullPointerException e) {
                         bufferedWriter.append(line);
                         bufferedWriter.newLine();
@@ -180,9 +191,8 @@ public class ConfigUpdater {
                         sectionWork = sectionName + ".";
                     }
 
-                    Map<String, String> typeList = mainConfig.getConfigTypeList();
                     //型を識別
-                    if(type == 1) {
+                    if (type == 1) {
                         //config.yml
                         if ((sectionWork + lineContent[0]).equalsIgnoreCase("version")) {
                             //バージョン：更新
@@ -200,7 +210,7 @@ public class ConfigUpdater {
                             //boolean
                             bufferedWriter.append(lineContent[0] + ": " + configuration.getBoolean(sectionWork + lineContent[0].trim()));
                         }
-                    }else{
+                    } else {
                         //message_xx.yml
                         if ((sectionWork + lineContent[0]).equalsIgnoreCase("version")) {
                             //バージョン：更新
@@ -219,6 +229,7 @@ public class ConfigUpdater {
             } catch (IOException e) {
                 Bukkit.getLogger().warning("[BeginnerManagement] New config file get failure.");
             }
+
         }
 
     }

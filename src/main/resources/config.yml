@@ -6,15 +6,43 @@
 # 新規プレイヤーによる荒らし行為防止プラグイン
 #
 # @author     rypengu23
-# @copyright  Copyright ryoengu23 2021
-version: 1.0
+# @copyright  Copyright ryoengu23 2021-2022
+version: 2.0
 language: "en"
 # =======================================
 
-setting:
+# DB接続先情報
+# Database connection information
+# MySQL Only
+database:
+  hostname: "localhost:3306"
+  db: "test"
+  user: "user"
+  password: "password"
+
+# Discord Related Settings
+# To use Discord notifications, you need to enter Discord SRV.
+# Discord関連設定
+# Discord通知を利用するにはDiscordSRVの道入が必須です。
+discord:
+
   # Whether to notify the Discord SRV console channel if any player is doing something dangerous.
-  # 危険行為を行っているプレイヤーが居た場合、DiscordSRVのコンソールチャンネルに通知するかどうか
+  # 危険行為を行っているプレイヤーが居た場合、DiscordSRVの指定チャンネルに通知するかどうか
   useDiscordSRV: false
+  notifyChannelId: ""
+  # Whether to notify if the player commits a dangerous act.
+  # If you want to notify the mention, enter the Discord user or role ID in notifyMentionId.
+  # プレイヤーが危険行為を行った場合、通知するかどうか
+  # メンション通知を行いたい場合はnotifyMentionIdにDiscordのユーザーまたはロールのIDを記載
+  useDiscordNotify: false
+  notifyMentionId: ""
+
+  # Whether to notify if the player is automatically banned.
+  # If you want to notify the mention, enter the Discord user or role ID in "notifyMentionId".
+  # プレイヤーが自動BANされた場合、通知するかどうか
+  # メンション通知を行いたい場合はnotifyMentionIdにDiscordのユーザーまたはロールのIDを記載
+  useDiscordNotifyForAutoBan: false
+  notifyMentionIdForAutoBan: ""
 
 time:
   # Time from initial login to release of dangerous acts.
@@ -26,12 +54,6 @@ time:
 limit:
   # Restrictions on opening dangerous acts.
   # 危険行為開放までの制限事項
-
-  # Destruction of blocks.
-  # true:Restrict false:Unrestricted
-  # ブロックの破壊
-  # true:制限 false:使用可
-  blockBreak: true
 
   # Items that cannot be obtained from chests, etc.
   # If you specify more than one, separate them with commas. (,)
@@ -80,3 +102,39 @@ limit:
   # 火打石・ファイヤーチャージの使用
   # true:制限 false:使用可
   useFlint: false
+
+# How many minutes to limit block destruction from the first login.
+# 初回ログインから何分間ブロックの破壊を制限するか
+break:
+  day: 0
+  hour : 0
+  minute : 3
+
+# Automatic punishment function.
+# 自動処罰機能
+autoBan:
+
+  # How many times to punish the restrictions within 10 minutes.
+  # 制限事項を10分以内に何回行ったら処罰するか
+  numberOfTimes: 10
+  # Message at the time of punishment.
+  # 処罰時のメッセージ
+  reason: ""
+  # Whether to do IPBAN at the time of punishment
+  # 処罰時にIPBANも行うか
+  useIpBan: true
+
+  # Punishment content for each number of punishments
+  # KICK：Kick the player from the server.
+  # TBAN:(minutes)：BAN the player for the specified time.
+  # BAN：BAN the player from the server.
+  # When specifying a number, list them separated by commas.
+  # If you are punished more than the stated number of punishments, you will be punished with the last one.
+  # 処罰回数毎の処罰内容
+  # KICK:プレイヤーをサーバーからkickします。
+  # TBAN:(minutes):プレイヤーを指定時間BANします。
+  # BAN:プレイヤーをサーバーからBANします。
+  # 複数指定する場合、カンマ区切りで記載 (1回目の処罰内容,2回目の処罰内容,...)
+  # 記載された処罰内容数以上に処罰された場合、最後の内容で処罰を行います。
+  detail: "KICK,TBAN:5,TBAN:30,TBAN:60,BAN"
+

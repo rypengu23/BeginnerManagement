@@ -28,6 +28,12 @@ public class TabComplete implements TabCompleter {
                 onCompList.add("reload");
             }
             onCompList.add("help");
+        }else if(args.length == 2){
+
+            if (sender.hasPermission("beginnerManagement.whitelist") && args[0].equalsIgnoreCase("whitelist")) {
+                onCompList.add("add");
+                onCompList.add("remove");
+            }
         }
 
         if ((command.getName().equalsIgnoreCase("beginnermanagement") || command.getName().equalsIgnoreCase("bm")) && onCompList.size() > 0) {

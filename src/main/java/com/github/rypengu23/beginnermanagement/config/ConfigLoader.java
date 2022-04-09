@@ -54,6 +54,10 @@ public class ConfigLoader {
         ConsoleMessage consoleMessage = new ConsoleMessage(mainConfig);
         consoleMessage.changeLanguageConsoleMessages();
 
+        //DiscordMessage
+        DiscordMessage discordMessage = new DiscordMessage(mainConfig);
+        discordMessage.changeLanguageDiscordMessages();
+
     }
 
     public MainConfig getMainConfig() {

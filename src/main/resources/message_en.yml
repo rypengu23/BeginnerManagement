@@ -2,7 +2,7 @@
 #  BeginnerManagement
 #  Message file
 # =======================================
-version: 1.0
+version: 2.0
 language: "English"
 # ↑↑ Do not edit ↑↑
 # =======================================
@@ -13,6 +13,7 @@ prefix: "[BM]"
 # [/bm info] runtime message
 # {time}:Date and time of release of restrictions. example)2021/01/01 0:00
 info: "Some actions are restricted until {time}."
+infoNotLimit: "You are not restricted."
 
 # Message to be displayed when a dangerous act is performed.
 # {time}:Date and time of release of restrictions. example)2021/01/01 0:00
