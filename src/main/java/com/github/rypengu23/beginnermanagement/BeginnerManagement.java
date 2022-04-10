@@ -21,7 +21,7 @@ import java.util.HashMap;
 public final class BeginnerManagement extends JavaPlugin {
 
     //バージョン
-    public static double pluginVersion = 2.0;
+    public static double pluginVersion = 2.1;
 
     //インスタンス
     private static BeginnerManagement instance = null;

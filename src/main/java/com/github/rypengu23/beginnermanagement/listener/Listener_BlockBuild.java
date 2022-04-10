@@ -92,6 +92,11 @@ public class Listener_BlockBuild implements Listener {
                 discordUtil.sendMessage(convertUtil.placeholderUtil("{player}", player.getDisplayName(), message.toString()));
             }
 
+            //自動BAN判定
+            AutoBanUtil autoBanUtil = new AutoBanUtil();
+            autoBanUtil.plusNumberOfViolations(playerData.getUUID());
+            autoBanUtil.checkPunishmentTime(player);
+
             //終了
             return;
         }
